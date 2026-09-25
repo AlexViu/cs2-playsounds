@@ -1,0 +1,52 @@
+using System.Text.Json.Serialization;
+using CounterStrikeSharp.API.Core;
+
+namespace PlaySounds;
+
+public class PlaySoundsConfig : BasePluginConfig
+{
+    /// <summary>Permiso necesario para usar los comandos.</summary>
+    [JsonPropertyName("AdminFlag")]
+    public string AdminFlag { get; set; } = "@css/generic";
+
+    /// <summary>Prefijo de los mensajes de chat.</summary>
+    [JsonPropertyName("ChatPrefix")]
+    public string ChatPrefix { get; set; } = " {darkred}[Halloween]{default}";
+
+    /// <summary>
+    /// Archivos de soundevents que se precachean al cargar el mapa.
+    /// Deben existir en un addon del workshop montado en el servidor (p. ej. con MultiAddonManager).
+    /// </summary>
+    [JsonPropertyName("SoundEventFiles")]
+    public List<string> SoundEventFiles { get; set; } = ["soundevents/soundevents_addon.vsndevts"];
+
+    /// <summary>Volumen por defecto (0.0 - 1.0) si no se indica en el comando.</summary>
+    [JsonPropertyName("DefaultVolume")]
+    public float DefaultVolume { get; set; } = 1.0f;
+
+    /// <summary>Si es true, se avisa en el chat a los admins de quién reprodujo qué.</summary>
+    [JsonPropertyName("NotifyAdmins")]
+    public bool NotifyAdmins { get; set; } = true;
+
+    /// <summary>Tipo de menú: "chat" (se elige con !1, !2...) o "center" (HTML en el centro de la pantalla).</summary>
+    [JsonPropertyName("MenuType")]
+    public string MenuType { get; set; } = "chat";
+
+    /// <summary>Si es true, tras reproducir un sonido desde el menú se vuelve a abrir la lista de sonidos.</summary>
+    [JsonPropertyName("ReopenMenuAfterPlay")]
+    public bool ReopenMenuAfterPlay { get; set; } = true;
+
+    /// <summary>
+    /// Alias cortos -> nombre del soundevent. También se puede usar el nombre del soundevent directamente.
+    /// El menú muestra los sonidos en este mismo orden.
+    /// </summary>
+    [JsonPropertyName("Sounds")]
+    public Dictionary<string, string> Sounds { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["grito"] = "halloween.scream",
+        ["risa"] = "halloween.laugh",
+        ["susurro"] = "halloween.whisper",
+        ["puerta"] = "halloween.door",
+        ["latido"] = "halloween.heartbeat",
+    };
+}

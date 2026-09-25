@@ -1,0 +1,38 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	// "csgo_mega" suena igual esté donde esté el jugador (ideal para css_sound / css_soundto)
+	"halloween.scream" =
+	{
+		type = "csgo_mega"
+		vsnd_files_track_01 = "sounds/halloween/scream.vsnd"
+		volume = 1.0
+	}
+	"halloween.laugh" =
+	{
+		type = "csgo_mega"
+		vsnd_files_track_01 = "sounds/halloween/laugh.vsnd"
+		volume = 1.0
+	}
+	"halloween.heartbeat" =
+	{
+		type = "csgo_mega"
+		vsnd_files_track_01 = "sounds/halloween/heartbeat.vsnd"
+		volume = 1.0
+	}
+
+	// "csgo_3d" se atenúa con la distancia (ideal para css_soundat)
+	"halloween.whisper" =
+	{
+		type = "csgo_3d"
+		vsnd_files_track_01 = "sounds/halloween/whisper.vsnd"
+		volume = 1.0
+		distance_max = 800.0
+	}
+	"halloween.door" =
+	{
+		type = "csgo_3d"
+		vsnd_files_track_01 = "sounds/halloween/door.vsnd"
+		volume = 1.0
+		distance_max = 1500.0
+	}
+}
