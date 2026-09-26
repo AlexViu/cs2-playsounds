@@ -1,52 +1,39 @@
 <!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
 {
-	// "csgo_mega" suena igual esté donde esté el jugador (ideal para css_sound / css_soundto)
-	"halloween.scream" =
+	// "csgo_mega": same volume wherever the player is (best for !psall / !psto)
+	"sounds.alert" =
 	{
 		type = "csgo_mega"
-		vsnd_files_track_01 = "sounds/halloween/scream.vsnd"
+		vsnd_files_track_01 = "sounds/playsounds/alert.vsnd"
 		volume = 1.0
 	}
-	"halloween.laugh" =
+	"sounds.alarm" =
 	{
 		type = "csgo_mega"
-		vsnd_files_track_01 = "sounds/halloween/laugh.vsnd"
-		volume = 1.0
-	}
-	"halloween.heartbeat" =
-	{
-		type = "csgo_mega"
-		vsnd_files_track_01 = "sounds/halloween/heartbeat.vsnd"
+		vsnd_files_track_01 = "sounds/playsounds/alarm.vsnd"
 		volume = 1.0
 	}
 
-	// "csgo_3d" se atenúa con la distancia (ideal para css_soundat)
-	"halloween.whisper" =
+	// "csgo_3d": fades with distance (best for !psat)
+	"sounds.steps" =
 	{
 		type = "csgo_3d"
-		vsnd_files_track_01 = "sounds/halloween/whisper.vsnd"
+		vsnd_files_track_01 = "sounds/playsounds/steps.vsnd"
 		volume = 1.0
 		distance_max = 800.0
 	}
-	"halloween.door" =
-	{
-		type = "csgo_3d"
-		vsnd_files_track_01 = "sounds/halloween/door.vsnd"
-		volume = 1.0
-		distance_max = 1500.0
-	}
 
-	// Canciones de la radio: "csgo_mega" para que se oigan igual estés donde estés
-	"radio.cancion1" =
+	// Radio songs: "csgo_mega" so they sound the same anywhere
+	"radio.song1" =
 	{
 		type = "csgo_mega"
-		vsnd_files_track_01 = "sounds/radio/cancion1.vsnd"
+		vsnd_files_track_01 = "sounds/radio/song1.vsnd"
 		volume = 1.0
 	}
-	"radio.cancion2" =
+	"radio.song2" =
 	{
 		type = "csgo_mega"
-		vsnd_files_track_01 = "sounds/radio/cancion2.vsnd"
+		vsnd_files_track_01 = "sounds/radio/song2.vsnd"
 		volume = 1.0
 	}
 }

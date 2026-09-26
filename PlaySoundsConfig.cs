@@ -11,7 +11,7 @@ public class PlaySoundsConfig : BasePluginConfig
 
     /// <summary>Prefijo de los mensajes de chat.</summary>
     [JsonPropertyName("ChatPrefix")]
-    public string ChatPrefix { get; set; } = " {darkred}[Halloween]{default}";
+    public string ChatPrefix { get; set; } = " {green}[PlaySounds]{default}";
 
     /// <summary>
     /// Archivos de soundevents que se precachean al cargar el mapa.
@@ -54,11 +54,9 @@ public class PlaySoundsConfig : BasePluginConfig
     [JsonPropertyName("Sounds")]
     public Dictionary<string, string> Sounds { get; set; } = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["grito"] = "halloween.scream",
-        ["risa"] = "halloween.laugh",
-        ["susurro"] = "halloween.whisper",
-        ["puerta"] = "halloween.door",
-        ["latido"] = "halloween.heartbeat",
+        ["alert"] = "sounds.alert",
+        ["alarm"] = "sounds.alarm",
+        ["steps"] = "sounds.steps",
     };
 }
 
@@ -90,8 +88,8 @@ public class RadioConfig
     [JsonPropertyName("Songs")]
     public Dictionary<string, string> Songs { get; set; } = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["Canción 1"] = "radio.cancion1",
-        ["Canción 2"] = "radio.cancion2",
+        ["Song 1"] = "radio.song1",
+        ["Song 2"] = "radio.song2",
     };
 }
 

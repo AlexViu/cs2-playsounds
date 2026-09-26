@@ -12,7 +12,7 @@ namespace PlaySounds;
 public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
 {
     public override string ModuleName => "PlaySounds";
-    public override string ModuleVersion => "1.3.0";
+    public override string ModuleVersion => "1.3.1";
     public override string ModuleAuthor => "Lonza";
     public override string ModuleDescription => "Permite a los admins reproducir sonidos a los jugadores.";
 
@@ -187,7 +187,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     // Paso 1: elegir sonido
     private void OpenSoundMenu(CCSPlayerController admin)
     {
-        var menu = CreateMenu("Sonidos de Halloween");
+        var menu = CreateMenu("Sonidos");
 
         if (Config.Sounds.Count == 0)
             menu.AddMenuOption("(no hay sonidos en el config)", (_, _) => { }, disabled: true);
