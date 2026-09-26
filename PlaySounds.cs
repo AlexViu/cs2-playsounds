@@ -9,10 +9,10 @@ using Microsoft.Extensions.Logging;
 
 namespace PlaySounds;
 
-public class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
+public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
 {
     public override string ModuleName => "PlaySounds";
-    public override string ModuleVersion => "1.2.0";
+    public override string ModuleVersion => "1.3.0";
     public override string ModuleAuthor => "Lonza";
     public override string ModuleDescription => "Permite a los admins reproducir sonidos a los jugadores.";
 
@@ -31,6 +31,8 @@ public class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         // System.Text.Json crea el diccionario sin comparador: lo rehacemos para que los alias no distingan mayúsculas.
         config.Sounds = new Dictionary<string, string>(config.Sounds, StringComparer.OrdinalIgnoreCase);
         config.DefaultVolume = Math.Clamp(config.DefaultVolume, 0f, 1f);
+        config.Radio.Songs = new Dictionary<string, string>(config.Radio.Songs, StringComparer.OrdinalIgnoreCase);
+        config.Radio.DefaultVolume = Math.Clamp(config.Radio.DefaultVolume, 0f, 1f);
         Config = config;
     }
 
@@ -45,6 +47,7 @@ public class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
                 manifest.AddResource(file);
         });
 
+        LoadRadio();
         RegisterCommands();
     }
 
@@ -63,6 +66,12 @@ public class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         Register(names.PlayAt, "Reproduce un sonido en la posición de un jugador (audible por los cercanos)", OnPlayAtCommand);
         Register(names.List, "Lista los sonidos disponibles", OnListCommand);
         Register(names.Reload, "Recarga PlaySounds.json sin reiniciar el servidor", OnReloadCommand);
+
+        if (Config.Radio.Enabled)
+        {
+            Register(Config.Radio.Commands, "Abre la radio", OnRadioCommand);
+            Register(Config.Radio.StopCommands, "Para la canción de la radio", OnRadioStopCommand);
+        }
     }
 
     private void Register(List<string> aliases, string description, CommandInfo.CommandCallback handler)

@@ -14,6 +14,7 @@ Los nombres por defecto son estos, pero se pueden cambiar en el JSON (ver [Cambi
 | `!psat <objetivo> <sonido> [volumen]` | Suena en la posición del objetivo y lo oye cualquiera que esté cerca (sonido 3D). |
 | `!pslist` | Lista los alias configurados. |
 | `!psreload` | Recarga `PlaySounds.json` sin reiniciar el servidor. |
+| `!radio` / `!radiostop` | Radio personal para cualquier jugador (ver [Radio](#radio)). |
 
 ### Menú (`!psmenu`)
 
@@ -38,6 +39,34 @@ Ejemplos:
 
 Por defecto hace falta el permiso `@css/generic` (se puede cambiar en el config). Desde la consola del servidor se puede usar siempre.
 
+
+## Radio
+
+Cualquier jugador puede escribir `!radio` y elegir una canción que **solo oye él**. El menú tiene:
+
+- **Parar**: corta la canción (también con `!radiostop`).
+- **Volumen**: 25 % → 50 % → 75 % → 100 %. Cada jugador tiene el suyo y se aplica a la siguiente canción.
+- **Aleatoria** y la lista de canciones (la que suena sale marcada con ▶).
+
+Se configura en la sección `"Radio"` del JSON:
+
+```json
+"Radio": {
+  "Enabled": true,
+  "Permission": "",
+  "DefaultVolume": 0.5,
+  "Commands": [ "radio" ],
+  "StopCommands": [ "radiostop" ],
+  "Songs": {
+    "Thriller": "radio.thriller",
+    "Ghostbusters": "radio.ghostbusters"
+  }
+}
+```
+
+- `Permission`: vacío para que la use todo el mundo, o un permiso (p. ej. `@css/vip`) para limitarla.
+- `Songs`: igual que `Sounds`, nombre del menú → nombre del soundevent. Las canciones van en el mismo addon y en el mismo `.vsndevts`, con `type = "csgo_mega"` (ver el ejemplo en `addon-ejemplo/`).
+- Las canciones suben mucho el tamaño del addon que descargan los jugadores: mejor `.mp3` que `.wav` para estas.
 ## Instalación
 
 1. Compila: `dotnet build -c Release` (necesita el SDK de .NET 10, igual que CounterStrikeSharp 1.0.375).

@@ -35,4 +35,18 @@
 		volume = 1.0
 		distance_max = 1500.0
 	}
+
+	// Canciones de la radio: "csgo_mega" para que se oigan igual estés donde estés
+	"radio.cancion1" =
+	{
+		type = "csgo_mega"
+		vsnd_files_track_01 = "sounds/radio/cancion1.vsnd"
+		volume = 1.0
+	}
+	"radio.cancion2" =
+	{
+		type = "csgo_mega"
+		vsnd_files_track_01 = "sounds/radio/cancion2.vsnd"
+		volume = 1.0
+	}
 }

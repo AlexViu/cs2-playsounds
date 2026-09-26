@@ -43,6 +43,10 @@ public class PlaySoundsConfig : BasePluginConfig
     [JsonPropertyName("Commands")]
     public CommandNames Commands { get; set; } = new();
 
+    /// <summary>Radio personal: cada jugador pone canciones que solo oye él.</summary>
+    [JsonPropertyName("Radio")]
+    public RadioConfig Radio { get; set; } = new();
+
     /// <summary>
     /// Alias cortos -> nombre del soundevent. También se puede usar el nombre del soundevent directamente.
     /// El menú muestra los sonidos en este mismo orden.
@@ -55,6 +59,39 @@ public class PlaySoundsConfig : BasePluginConfig
         ["susurro"] = "halloween.whisper",
         ["puerta"] = "halloween.door",
         ["latido"] = "halloween.heartbeat",
+    };
+}
+
+public class RadioConfig
+{
+    [JsonPropertyName("Enabled")]
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>Permiso para usar la radio. Vacío = cualquier jugador.</summary>
+    [JsonPropertyName("Permission")]
+    public string Permission { get; set; } = "";
+
+    /// <summary>Volumen inicial de cada jugador (0.0 - 1.0). Cada uno lo puede cambiar desde el menú.</summary>
+    [JsonPropertyName("DefaultVolume")]
+    public float DefaultVolume { get; set; } = 0.5f;
+
+    /// <summary>Comandos para abrir el menú de la radio (sin "css_").</summary>
+    [JsonPropertyName("Commands")]
+    public List<string> Commands { get; set; } = ["radio"];
+
+    /// <summary>Comandos para parar la canción (sin "css_").</summary>
+    [JsonPropertyName("StopCommands")]
+    public List<string> StopCommands { get; set; } = ["radiostop"];
+
+    /// <summary>
+    /// Nombre que sale en el menú -> nombre del soundevent. Mejor que sean de tipo "csgo_mega"
+    /// y estén en uno de los archivos de SoundEventFiles.
+    /// </summary>
+    [JsonPropertyName("Songs")]
+    public Dictionary<string, string> Songs { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Canción 1"] = "radio.cancion1",
+        ["Canción 2"] = "radio.cancion2",
     };
 }
 
