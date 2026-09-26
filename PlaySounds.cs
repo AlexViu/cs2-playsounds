@@ -1,6 +1,5 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Config;
@@ -13,9 +12,9 @@ namespace PlaySounds;
 public class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
 {
     public override string ModuleName => "PlaySounds";
-    public override string ModuleVersion => "1.1.0";
-    public override string ModuleAuthor => "alex";
-    public override string ModuleDescription => "Permite a los admins reproducir sonidos a los jugadores (evento Halloween).";
+    public override string ModuleVersion => "1.2.0";
+    public override string ModuleAuthor => "Lonza";
+    public override string ModuleDescription => "Permite a los admins reproducir sonidos a los jugadores.";
 
     public PlaySoundsConfig Config { get; set; } = new();
 
@@ -35,6 +34,9 @@ public class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         Config = config;
     }
 
+    // Comandos registrados, para poder quitarlos y volver a registrarlos al recargar el config.
+    private readonly List<(string Name, CommandInfo.CommandCallback Handler)> _registeredCommands = [];
+
     public override void Load(bool hotReload)
     {
         RegisterListener<Listeners.OnServerPrecacheResources>(manifest =>
@@ -42,48 +44,91 @@ public class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
             foreach (var file in Config.SoundEventFiles)
                 manifest.AddResource(file);
         });
+
+        RegisterCommands();
     }
 
     #region Comandos
 
-    // css_sound <sonido> [volumen] -> todos lo oyen "dentro de su cabeza"
-    [ConsoleCommand("css_sound", "Reproduce un sonido a todos los jugadores")]
-    [CommandHelper(minArgs: 1, usage: "<sonido> [volumen 0-1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
-    public void OnSoundCommand(CCSPlayerController? caller, CommandInfo command)
+    private void RegisterCommands()
+    {
+        foreach (var (name, handler) in _registeredCommands)
+            RemoveCommand(name, handler);
+        _registeredCommands.Clear();
+
+        var names = Config.Commands;
+        Register(names.Menu, "Abre el menú de sonidos", OnMenuCommand);
+        Register(names.PlayAll, "Reproduce un sonido a todos los jugadores", OnPlayAllCommand);
+        Register(names.PlayTo, "Reproduce un sonido solo a los jugadores objetivo", OnPlayToCommand);
+        Register(names.PlayAt, "Reproduce un sonido en la posición de un jugador (audible por los cercanos)", OnPlayAtCommand);
+        Register(names.List, "Lista los sonidos disponibles", OnListCommand);
+        Register(names.Reload, "Recarga PlaySounds.json sin reiniciar el servidor", OnReloadCommand);
+    }
+
+    private void Register(List<string> aliases, string description, CommandInfo.CommandCallback handler)
+    {
+        foreach (var alias in aliases)
+        {
+            var name = alias.Trim().TrimStart('!', '/').ToLowerInvariant();
+            if (name.Length == 0 || name.Contains(' ')) continue;
+            if (!name.StartsWith("css_")) name = "css_" + name;
+            if (_registeredCommands.Any(c => c.Name == name)) continue;
+
+            AddCommand(name, description, handler);
+            _registeredCommands.Add((name, handler));
+        }
+    }
+
+    // Nombre del primer alias de un comando, tal como se escribe en el chat (para los mensajes de uso).
+    private static string ChatName(List<string> aliases) =>
+        "!" + (aliases.FirstOrDefault()?.Trim().TrimStart('!', '/') ?? "?");
+
+    // <menu>
+    private void OnMenuCommand(CCSPlayerController? caller, CommandInfo command)
+    {
+        if (caller is null)
+        {
+            command.ReplyToCommand("El menú solo se puede abrir desde el juego.");
+            return;
+        }
+        if (!HasAccess(caller, command)) return;
+
+        OpenSoundMenu(caller);
+    }
+
+    // <playall> <sonido> [volumen] -> todos lo oyen "dentro de su cabeza"
+    private void OnPlayAllCommand(CCSPlayerController? caller, CommandInfo command)
     {
         if (!HasAccess(caller, command)) return;
+        if (!RequireArgs(caller, command, 1, $"{ChatName(Config.Commands.PlayAll)} <sonido> [volumen 0-1]")) return;
         if (!TryResolveSound(caller, command, command.GetArg(1), out var sound)) return;
 
         PlayToAll(caller, sound, ParseVolume(command, 2), command);
     }
 
-    // css_soundto <objetivo> <sonido> [volumen] -> solo el objetivo lo oye
-    [ConsoleCommand("css_soundto", "Reproduce un sonido solo a los jugadores objetivo")]
-    [CommandHelper(minArgs: 2, usage: "<objetivo> <sonido> [volumen 0-1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
-    public void OnSoundToCommand(CCSPlayerController? caller, CommandInfo command)
+    // <playto> <objetivo> <sonido> [volumen] -> solo el objetivo lo oye
+    private void OnPlayToCommand(CCSPlayerController? caller, CommandInfo command)
     {
         if (!HasAccess(caller, command)) return;
+        if (!RequireArgs(caller, command, 2, $"{ChatName(Config.Commands.PlayTo)} <objetivo> <sonido> [volumen 0-1]")) return;
         if (!TryGetTargets(caller, command, out var targets)) return;
         if (!TryResolveSound(caller, command, command.GetArg(2), out var sound)) return;
 
         Play(caller, PlayMode.Private, targets, sound, ParseVolume(command, 3), command);
     }
 
-    // css_soundat <objetivo> <sonido> [volumen] -> suena en la posición del objetivo, lo oyen todos los cercanos en 3D
-    [ConsoleCommand("css_soundat", "Reproduce un sonido en la posición de un jugador (audible por los cercanos)")]
-    [CommandHelper(minArgs: 2, usage: "<objetivo> <sonido> [volumen 0-1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
-    public void OnSoundAtCommand(CCSPlayerController? caller, CommandInfo command)
+    // <playat> <objetivo> <sonido> [volumen] -> suena en la posición del objetivo, lo oyen todos los cercanos en 3D
+    private void OnPlayAtCommand(CCSPlayerController? caller, CommandInfo command)
     {
         if (!HasAccess(caller, command)) return;
+        if (!RequireArgs(caller, command, 2, $"{ChatName(Config.Commands.PlayAt)} <objetivo> <sonido> [volumen 0-1]")) return;
         if (!TryGetTargets(caller, command, out var targets)) return;
         if (!TryResolveSound(caller, command, command.GetArg(2), out var sound)) return;
 
         Play(caller, PlayMode.AtPosition, targets, sound, ParseVolume(command, 3), command);
     }
 
-    [ConsoleCommand("css_sounds", "Lista los sonidos disponibles")]
-    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
-    public void OnSoundsCommand(CCSPlayerController? caller, CommandInfo command)
+    private void OnListCommand(CCSPlayerController? caller, CommandInfo command)
     {
         if (!HasAccess(caller, command)) return;
 
@@ -98,30 +143,32 @@ public class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
             Reply(caller, command, $"  {{green}}{alias}{{default}} -> {soundEvent}");
     }
 
-    [ConsoleCommand("css_soundmenu", "Abre el menú de sonidos")]
-    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
-    public void OnSoundMenuCommand(CCSPlayerController? caller, CommandInfo command)
-    {
-        if (caller is null || !HasAccess(caller, command)) return;
-        OpenSoundMenu(caller);
-    }
-
-    [ConsoleCommand("css_soundsreload", "Recarga PlaySounds.json sin reiniciar el servidor")]
-    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
-    public void OnReloadCommand(CCSPlayerController? caller, CommandInfo command)
+    private void OnReloadCommand(CCSPlayerController? caller, CommandInfo command)
     {
         if (!HasAccess(caller, command)) return;
 
         try
         {
             OnConfigParsed(ConfigManager.Load<PlaySoundsConfig>(ModuleName));
-            Reply(caller, command, $"Config recargado: {Config.Sounds.Count} sonido(s).");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error recargando el config de PlaySounds");
             Reply(caller, command, "{red}Error al recargar el config. Revisa que el JSON sea válido (mira la consola).");
+            return;
         }
+
+        // Responder antes de re-registrar: el propio comando de recarga puede cambiar de nombre.
+        Reply(caller, command, $"Config recargado: {Config.Sounds.Count} sonido(s). Menú: {ChatName(Config.Commands.Menu)}");
+        Server.NextFrame(RegisterCommands);
+    }
+
+    private bool RequireArgs(CCSPlayerController? caller, CommandInfo command, int count, string usage)
+    {
+        if (command.ArgCount > count) return true;
+
+        Reply(caller, command, $"Uso: {usage}");
+        return false;
     }
 
     #endregion
@@ -300,7 +347,7 @@ public class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         sound = Config.Sounds.TryGetValue(input, out var mapped) ? mapped : input;
         if (!string.IsNullOrWhiteSpace(sound)) return true;
 
-        Reply(caller, command, "{red}Sonido no válido. Usa css_sounds para ver la lista.");
+        Reply(caller, command, $"{{red}}Sonido no válido. Usa {ChatName(Config.Commands.List)} para ver la lista.");
         return false;
     }
 

@@ -37,6 +37,13 @@ public class PlaySoundsConfig : BasePluginConfig
     public bool ReopenMenuAfterPlay { get; set; } = true;
 
     /// <summary>
+    /// Nombres de los comandos. Cada uno puede tener varios alias. Sin "css_" delante: se añade solo,
+    /// y en el chat se usan con ! o / (p. ej. "psmenu" -> !psmenu).
+    /// </summary>
+    [JsonPropertyName("Commands")]
+    public CommandNames Commands { get; set; } = new();
+
+    /// <summary>
     /// Alias cortos -> nombre del soundevent. También se puede usar el nombre del soundevent directamente.
     /// El menú muestra los sonidos en este mismo orden.
     /// </summary>
@@ -49,4 +56,25 @@ public class PlaySoundsConfig : BasePluginConfig
         ["puerta"] = "halloween.door",
         ["latido"] = "halloween.heartbeat",
     };
+}
+
+public class CommandNames
+{
+    [JsonPropertyName("Menu")]
+    public List<string> Menu { get; set; } = ["psmenu"];
+
+    [JsonPropertyName("PlayAll")]
+    public List<string> PlayAll { get; set; } = ["psall"];
+
+    [JsonPropertyName("PlayTo")]
+    public List<string> PlayTo { get; set; } = ["psto"];
+
+    [JsonPropertyName("PlayAt")]
+    public List<string> PlayAt { get; set; } = ["psat"];
+
+    [JsonPropertyName("List")]
+    public List<string> List { get; set; } = ["pslist"];
+
+    [JsonPropertyName("Reload")]
+    public List<string> Reload { get; set; } = ["psreload"];
 }

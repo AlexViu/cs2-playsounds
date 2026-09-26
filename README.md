@@ -4,16 +4,18 @@ Plugin para que los admins reproduzcan sonidos a los jugadores durante la partid
 
 ## Comandos
 
+Los nombres por defecto son estos, pero se pueden cambiar en el JSON (ver [Cambiar los nombres de los comandos](#cambiar-los-nombres-de-los-comandos)).
+
 | Comando | Qué hace |
 |---|---|
-| `css_soundmenu` | Abre el menú: sonido → a quién → jugador. |
-| `css_sound <sonido> [volumen]` | Todos lo oyen, "dentro de su cabeza". |
-| `css_soundto <objetivo> <sonido> [volumen]` | Solo lo oye el objetivo. Los demás no se enteran. |
-| `css_soundat <objetivo> <sonido> [volumen]` | Suena en la posición del objetivo y lo oye cualquiera que esté cerca (sonido 3D). |
-| `css_sounds` | Lista los alias configurados. |
-| `css_soundsreload` | Recarga `PlaySounds.json` sin reiniciar el servidor. |
+| `!psmenu` | Abre el menú: sonido → a quién → jugador. |
+| `!psall <sonido> [volumen]` | Todos lo oyen, "dentro de su cabeza". |
+| `!psto <objetivo> <sonido> [volumen]` | Solo lo oye el objetivo. Los demás no se enteran. |
+| `!psat <objetivo> <sonido> [volumen]` | Suena en la posición del objetivo y lo oye cualquiera que esté cerca (sonido 3D). |
+| `!pslist` | Lista los alias configurados. |
+| `!psreload` | Recarga `PlaySounds.json` sin reiniciar el servidor. |
 
-### Menú (`!soundmenu`)
+### Menú (`!psmenu`)
 
 1. Eliges el sonido (salen en el mismo orden que en el JSON).
 2. Eliges a quién: **Todos**, **Solo a un jugador** o **Junto a un jugador (3D)**.
@@ -21,17 +23,17 @@ Plugin para que los admins reproduzcan sonidos a los jugadores durante la partid
 
 Después de reproducir, el menú vuelve a la lista de sonidos para poder encadenar sustos (se desactiva con `ReopenMenuAfterPlay: false`). Con el menú de chat se elige escribiendo `!1`, `!2`...; si prefieres el menú en el centro de la pantalla, pon `"MenuType": "center"`.
 
-En el chat también funcionan como `!sound`, `!soundto`, etc. (o `/sound` para que no se vea el mensaje).
+En el chat se usan con `!` (o `/` para que no se vea el mensaje). En la consola, con `css_` delante: `css_psmenu`, `css_psto`...
 
-- `<sonido>`: un alias del config (`grito`) o el nombre del soundevent directamente (`halloween.scream`).
+- `<sonido>`: un alias del config (`grito`) o el nombre del soundevent directamente (`halloween.grito`).
 - `<objetivo>`: nombre, `#userid`, `@all`, `@ct`, `@t`, `@alive`, `@dead`, `@me`...
 - `[volumen]`: opcional, de `0` a `1`.
 
 Ejemplos:
 ```
-css_soundto "Pepe" susurro          // solo Pepe oye un susurro
-css_soundat @ct puerta 0.8          // suena una puerta donde está cada CT
-css_sound grito                     // grito para todo el servidor
+!psto "Pepe" susurro          // solo Pepe oye un susurro
+!psat @ct susurro 0.8         // un susurro junto a cada CT
+!psall grito                  // grito para todo el servidor
 ```
 
 Por defecto hace falta el permiso `@css/generic` (se puede cambiar en el config). Desde la consola del servidor se puede usar siempre.
@@ -62,6 +64,14 @@ En CS2 no se pueden reproducir `.mp3`/`.wav` sueltos desde el servidor. Los soni
   "NotifyAdmins": true,
   "MenuType": "chat",
   "ReopenMenuAfterPlay": true,
+  "Commands": {
+    "Menu": [ "psmenu" ],
+    "PlayAll": [ "psall" ],
+    "PlayTo": [ "psto" ],
+    "PlayAt": [ "psat" ],
+    "List": [ "pslist" ],
+    "Reload": [ "psreload" ]
+  },
   "Sounds": {
     "grito": "halloween.scream",
     "risa": "halloween.laugh",
@@ -72,13 +82,30 @@ En CS2 no se pueden reproducir `.mp3`/`.wav` sueltos desde el servidor. Los soni
 }
 ```
 
-Para añadir un sonido, basta con una línea nueva en `"Sounds"`: `"nombre que sale en el menú": "nombre.del.soundevent"`. Después usa `css_soundsreload`.
+Para añadir un sonido, basta con una línea nueva en `"Sounds"`: `"nombre que sale en el menú": "nombre.del.soundevent"`. Después usa `!psreload`.
 
 El plugin precachea los archivos de `SoundEventFiles` al cargar cada mapa. Si cambias esa lista, recarga el mapa.
 
+### Cambiar los nombres de los comandos
+
+En la sección `"Commands"` del JSON. Se escriben sin `!` ni `css_` y cada comando puede tener varios nombres:
+
+```json
+"Commands": {
+  "Menu": [ "sustos", "hwmenu" ],
+  "PlayAll": [ "hwall" ],
+  "PlayTo": [ "hwto" ],
+  "PlayAt": [ "hwat" ],
+  "List": [ "hwlist" ],
+  "Reload": [ "hwreload" ]
+}
+```
+
+Así el menú se abre con `!sustos` o `!hwmenu`. Si en tu JSON no está la sección `"Commands"`, se usan los nombres por defecto (`psmenu`, `psall`...). Los cambios se aplican con el comando de recarga (con el nombre que tenía hasta ahora).
+
 ### Consejos para asustar
 
-- Los sonidos tipo `csgo_mega` suenan igual estés donde estés: úsalos con `css_sound` / `css_soundto`.
-- Los tipo `csgo_3d` se atenúan con la distancia: con `css_soundat` parece que algo está *al lado* del jugador.
-- Un `latido` a una sola persona con `css_soundto` mientras está sola en un pasillo funciona muy bien.
+- Los sonidos tipo `csgo_mega` suenan igual estés donde estés: úsalos con `!psall` / `!psto`.
+- Los tipo `csgo_3d` se atenúan con la distancia: con `!psat` parece que algo está *al lado* del jugador.
+- Un `latido` a una sola persona con `!psto` mientras está sola en un pasillo funciona muy bien.
 - Antes del evento, prueba cada sonido en un servidor local: si un soundevent no existe o no se ha descargado, no suena y no da error.
