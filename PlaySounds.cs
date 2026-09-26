@@ -12,7 +12,7 @@ namespace PlaySounds;
 public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
 {
     public override string ModuleName => "PlaySounds";
-    public override string ModuleVersion => "1.3.1";
+    public override string ModuleVersion => "1.4.0";
     public override string ModuleAuthor => "Lonza";
     public override string ModuleDescription => "Permite a los admins reproducir sonidos a los jugadores.";
 
@@ -34,6 +34,28 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         config.Radio.Songs = new Dictionary<string, string>(config.Radio.Songs, StringComparer.OrdinalIgnoreCase);
         config.Radio.DefaultVolume = Math.Clamp(config.Radio.DefaultVolume, 0f, 1f);
         Config = config;
+
+        if (!Messages.Languages.TryGetValue(config.Language, out var texts))
+        {
+            Console.WriteLine($"[PlaySounds] Idioma \"{config.Language}\" no disponible, se usa \"{Messages.FallbackLanguage}\". " +
+                              $"Disponibles: {string.Join(", ", Messages.Languages.Keys)}");
+            texts = Messages.Languages[Messages.FallbackLanguage];
+        }
+        _texts = texts;
+    }
+
+    private Dictionary<string, string> _texts = Messages.Languages[Messages.FallbackLanguage];
+
+    // Texto traducido. {0}, {1}... se sustituyen a mano (no con string.Format) para no chocar con {green}, {red}...
+    private string T(string key, params object[] args)
+    {
+        if (!_texts.TryGetValue(key, out var text) &&
+            !Messages.Languages[Messages.FallbackLanguage].TryGetValue(key, out text))
+            return key;
+
+        for (var i = 0; i < args.Length; i++)
+            text = text.Replace($"{{{i}}}", args[i].ToString());
+        return text;
     }
 
     // Comandos registrados, para poder quitarlos y volver a registrarlos al recargar el config.
@@ -60,17 +82,17 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         _registeredCommands.Clear();
 
         var names = Config.Commands;
-        Register(names.Menu, "Abre el menú de sonidos", OnMenuCommand);
-        Register(names.PlayAll, "Reproduce un sonido a todos los jugadores", OnPlayAllCommand);
-        Register(names.PlayTo, "Reproduce un sonido solo a los jugadores objetivo", OnPlayToCommand);
-        Register(names.PlayAt, "Reproduce un sonido en la posición de un jugador (audible por los cercanos)", OnPlayAtCommand);
-        Register(names.List, "Lista los sonidos disponibles", OnListCommand);
-        Register(names.Reload, "Recarga PlaySounds.json sin reiniciar el servidor", OnReloadCommand);
+        Register(names.Menu, T("Desc.Menu"), OnMenuCommand);
+        Register(names.PlayAll, T("Desc.PlayAll"), OnPlayAllCommand);
+        Register(names.PlayTo, T("Desc.PlayTo"), OnPlayToCommand);
+        Register(names.PlayAt, T("Desc.PlayAt"), OnPlayAtCommand);
+        Register(names.List, T("Desc.List"), OnListCommand);
+        Register(names.Reload, T("Desc.Reload"), OnReloadCommand);
 
         if (Config.Radio.Enabled)
         {
-            Register(Config.Radio.Commands, "Abre la radio", OnRadioCommand);
-            Register(Config.Radio.StopCommands, "Para la canción de la radio", OnRadioStopCommand);
+            Register(Config.Radio.Commands, T("Desc.Radio"), OnRadioCommand);
+            Register(Config.Radio.StopCommands, T("Desc.RadioStop"), OnRadioStopCommand);
         }
     }
 
@@ -97,7 +119,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     {
         if (caller is null)
         {
-            command.ReplyToCommand("El menú solo se puede abrir desde el juego.");
+            command.ReplyToCommand(T("OnlyInGame"));
             return;
         }
         if (!HasAccess(caller, command)) return;
@@ -109,7 +131,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     private void OnPlayAllCommand(CCSPlayerController? caller, CommandInfo command)
     {
         if (!HasAccess(caller, command)) return;
-        if (!RequireArgs(caller, command, 1, $"{ChatName(Config.Commands.PlayAll)} <sonido> [volumen 0-1]")) return;
+        if (!RequireArgs(caller, command, 1, $"{ChatName(Config.Commands.PlayAll)} {T("Args.Sound")}")) return;
         if (!TryResolveSound(caller, command, command.GetArg(1), out var sound)) return;
 
         PlayToAll(caller, sound, ParseVolume(command, 2), command);
@@ -119,7 +141,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     private void OnPlayToCommand(CCSPlayerController? caller, CommandInfo command)
     {
         if (!HasAccess(caller, command)) return;
-        if (!RequireArgs(caller, command, 2, $"{ChatName(Config.Commands.PlayTo)} <objetivo> <sonido> [volumen 0-1]")) return;
+        if (!RequireArgs(caller, command, 2, $"{ChatName(Config.Commands.PlayTo)} {T("Args.TargetSound")}")) return;
         if (!TryGetTargets(caller, command, out var targets)) return;
         if (!TryResolveSound(caller, command, command.GetArg(2), out var sound)) return;
 
@@ -130,7 +152,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     private void OnPlayAtCommand(CCSPlayerController? caller, CommandInfo command)
     {
         if (!HasAccess(caller, command)) return;
-        if (!RequireArgs(caller, command, 2, $"{ChatName(Config.Commands.PlayAt)} <objetivo> <sonido> [volumen 0-1]")) return;
+        if (!RequireArgs(caller, command, 2, $"{ChatName(Config.Commands.PlayAt)} {T("Args.TargetSound")}")) return;
         if (!TryGetTargets(caller, command, out var targets)) return;
         if (!TryResolveSound(caller, command, command.GetArg(2), out var sound)) return;
 
@@ -143,11 +165,11 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
 
         if (Config.Sounds.Count == 0)
         {
-            Reply(caller, command, "No hay sonidos en el config. Puedes usar el nombre del soundevent directamente.");
+            Reply(caller, command, T("NoSoundsConfigured"));
             return;
         }
 
-        Reply(caller, command, "Sonidos disponibles:");
+        Reply(caller, command, T("SoundList"));
         foreach (var (alias, soundEvent) in Config.Sounds)
             Reply(caller, command, $"  {{green}}{alias}{{default}} -> {soundEvent}");
     }
@@ -163,12 +185,12 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error recargando el config de PlaySounds");
-            Reply(caller, command, "{red}Error al recargar el config. Revisa que el JSON sea válido (mira la consola).");
+            Reply(caller, command, T("ReloadError"));
             return;
         }
 
         // Responder antes de re-registrar: el propio comando de recarga puede cambiar de nombre.
-        Reply(caller, command, $"Config recargado: {Config.Sounds.Count} sonido(s). Menú: {ChatName(Config.Commands.Menu)}");
+        Reply(caller, command, T("Reloaded", Config.Sounds.Count, ChatName(Config.Commands.Menu)));
         Server.NextFrame(RegisterCommands);
     }
 
@@ -176,7 +198,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     {
         if (command.ArgCount > count) return true;
 
-        Reply(caller, command, $"Uso: {usage}");
+        Reply(caller, command, T("Usage", usage));
         return false;
     }
 
@@ -187,10 +209,10 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     // Paso 1: elegir sonido
     private void OpenSoundMenu(CCSPlayerController admin)
     {
-        var menu = CreateMenu("Sonidos");
+        var menu = CreateMenu(T("Menu.Sounds"));
 
         if (Config.Sounds.Count == 0)
-            menu.AddMenuOption("(no hay sonidos en el config)", (_, _) => { }, disabled: true);
+            menu.AddMenuOption(T("Menu.NoSounds"), (_, _) => { }, disabled: true);
 
         foreach (var (alias, soundEvent) in Config.Sounds)
             menu.AddMenuOption(alias, (p, _) => OpenModeMenu(p, alias, soundEvent));
@@ -201,16 +223,16 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     // Paso 2: elegir a quién
     private void OpenModeMenu(CCSPlayerController admin, string alias, string sound)
     {
-        var menu = CreateMenu($"{alias}: ¿a quién?");
+        var menu = CreateMenu(T("Menu.Who", alias));
 
-        menu.AddMenuOption("Todos (en su cabeza)", (p, _) =>
+        menu.AddMenuOption(T("Menu.Everyone"), (p, _) =>
         {
             PlayToAll(p, sound, Config.DefaultVolume);
             AfterPlay(p);
         });
-        menu.AddMenuOption("Solo a un jugador", (p, _) => OpenPlayerMenu(p, alias, sound, PlayMode.Private));
-        menu.AddMenuOption("Junto a un jugador (3D)", (p, _) => OpenPlayerMenu(p, alias, sound, PlayMode.AtPosition));
-        menu.AddMenuOption("« Volver", (p, _) => OpenSoundMenu(p));
+        menu.AddMenuOption(T("Menu.OnlyPlayer"), (p, _) => OpenPlayerMenu(p, alias, sound, PlayMode.Private));
+        menu.AddMenuOption(T("Menu.NextToPlayer"), (p, _) => OpenPlayerMenu(p, alias, sound, PlayMode.AtPosition));
+        menu.AddMenuOption(T("Menu.Back"), (p, _) => OpenSoundMenu(p));
 
         menu.Open(admin);
     }
@@ -218,15 +240,15 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     // Paso 3: elegir jugador
     private void OpenPlayerMenu(CCSPlayerController admin, string alias, string sound, PlayMode mode)
     {
-        var title = mode == PlayMode.Private ? $"{alias}: solo a..." : $"{alias}: junto a...";
+        var title = mode == PlayMode.Private ? T("Menu.OnlyTo", alias) : T("Menu.NextTo", alias);
         var menu = CreateMenu(title);
 
-        menu.AddMenuOption("Jugador vivo aleatorio", (p, _) =>
+        menu.AddMenuOption(T("Menu.RandomAlive"), (p, _) =>
         {
             var alive = Utilities.GetPlayers().Where(pl => IsValidHuman(pl) && pl.PawnIsAlive).ToList();
             if (alive.Count == 0)
             {
-                Reply(p, null, "{red}No hay jugadores vivos.");
+                Reply(p, null, T("NoAlivePlayers"));
                 return;
             }
 
@@ -243,7 +265,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         {
             // Guardamos el userid y no el objeto: el jugador puede haberse ido cuando se pulse la opción.
             var userId = target.UserId ?? -1;
-            var label = $"{target.PlayerName} [{TeamTag(target.Team)}]{(target.PawnIsAlive ? "" : " (muerto)")}";
+            var label = $"{target.PlayerName} [{TeamTag(target.Team)}]{(target.PawnIsAlive ? "" : " " + T("Menu.Dead"))}";
             var needsPawn = mode == PlayMode.AtPosition && !target.PawnIsAlive;
 
             menu.AddMenuOption(label, (p, _) =>
@@ -251,7 +273,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
                 var current = Utilities.GetPlayerFromUserid(userId);
                 if (current is null || !IsValidHuman(current))
                 {
-                    Reply(p, null, "{red}Ese jugador ya no está en el servidor.");
+                    Reply(p, null, T("PlayerGone"));
                     OpenPlayerMenu(p, alias, sound, mode);
                     return;
                 }
@@ -261,7 +283,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
             }, disabled: needsPawn);
         }
 
-        menu.AddMenuOption("« Volver", (p, _) => OpenModeMenu(p, alias, sound));
+        menu.AddMenuOption(T("Menu.Back"), (p, _) => OpenModeMenu(p, alias, sound));
 
         menu.Open(admin);
     }
@@ -303,8 +325,8 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         foreach (var player in players)
             EmitFrom(player, sound, volume, new RecipientFilter { player });
 
-        Reply(caller, command, $"Reproduciendo {{green}}{sound}{{default}} a todos ({players.Count}).");
-        NotifyAdmins(caller, $"reprodujo {sound} a todos");
+        Reply(caller, command, T("PlayingAll", sound, players.Count));
+        NotifyAdmins(caller, name => T("Notify.All", name, sound));
     }
 
     private void Play(CCSPlayerController? caller, PlayMode mode, List<CCSPlayerController> targets, string sound,
@@ -325,9 +347,10 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
             }
         }
 
-        var where = mode == PlayMode.Private ? "a" : "junto a";
-        Reply(caller, command, $"Reproduciendo {{green}}{sound}{{default}} {where} {DescribeTargets(targets)}.");
-        NotifyAdmins(caller, $"reprodujo {sound} {where} {DescribeTargets(targets)}");
+        var who = DescribeTargets(targets);
+        var isPrivate = mode == PlayMode.Private;
+        Reply(caller, command, T(isPrivate ? "PlayingTo" : "PlayingAt", sound, who));
+        NotifyAdmins(caller, name => T(isPrivate ? "Notify.To" : "Notify.At", name, sound, who));
     }
 
     private static void EmitFrom(CCSPlayerController player, string sound, float volume, RecipientFilter filter)
@@ -347,7 +370,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         if (caller is null || AdminManager.PlayerHasPermissions(caller, Config.AdminFlag))
             return true;
 
-        Reply(caller, command, "{red}No tienes permiso para usar este comando.");
+        Reply(caller, command, T("NoPermission"));
         return false;
     }
 
@@ -356,7 +379,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         sound = Config.Sounds.TryGetValue(input, out var mapped) ? mapped : input;
         if (!string.IsNullOrWhiteSpace(sound)) return true;
 
-        Reply(caller, command, $"{{red}}Sonido no válido. Usa {ChatName(Config.Commands.List)} para ver la lista.");
+        Reply(caller, command, T("InvalidSound", ChatName(Config.Commands.List)));
         return false;
     }
 
@@ -365,7 +388,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         targets = command.GetArgTargetResult(1).Players.Where(IsValidHuman).ToList();
         if (targets.Count > 0) return true;
 
-        Reply(caller, command, "{red}No se encontró ningún jugador. Ejemplos: nombre, #userid, @all, @ct, @t, @alive.");
+        Reply(caller, command, T("NoTargets"));
         return false;
     }
 
@@ -382,8 +405,8 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     private static bool IsValidHuman(CCSPlayerController player) =>
         player is { IsValid: true, IsBot: false, IsHLTV: false, Connected: PlayerConnectedState.Connected };
 
-    private static string DescribeTargets(List<CCSPlayerController> targets) =>
-        targets.Count == 1 ? targets[0].PlayerName : $"{targets.Count} jugadores";
+    private string DescribeTargets(List<CCSPlayerController> targets) =>
+        targets.Count == 1 ? targets[0].PlayerName : T("PlayerCount", targets.Count);
 
     private void Reply(CCSPlayerController? caller, CommandInfo? command, string message)
     {
@@ -393,12 +416,13 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
             caller.PrintToChat(ReplaceColors($"{Config.ChatPrefix} {message}"));
     }
 
-    private void NotifyAdmins(CCSPlayerController? caller, string action)
+    // El texto recibe el nombre de quien lo hizo (cada idioma lo coloca donde toca en la frase).
+    private void NotifyAdmins(CCSPlayerController? caller, Func<string, string> text)
     {
         if (!Config.NotifyAdmins) return;
 
-        var name = caller?.PlayerName ?? "Consola";
-        var message = ReplaceColors($"{Config.ChatPrefix} {{grey}}{name} {action}.");
+        var name = caller?.PlayerName ?? T("Console");
+        var message = ReplaceColors($"{Config.ChatPrefix} {{grey}}{text(name)}");
         foreach (var admin in Utilities.GetPlayers().Where(IsValidHuman))
         {
             if (admin != caller && AdminManager.PlayerHasPermissions(admin, Config.AdminFlag))

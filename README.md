@@ -2,14 +2,13 @@
 
 A CS2 plugin for [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp) that lets admins play sounds to players during a match, plus a personal radio any player can use.
 
-> In-game messages and menus are currently in Spanish.
-
 ## Features
 
 - Play a sound to everyone, to specific players only, or at a player's position (3D, heard by anyone nearby).
 - Step-by-step menu (sound → who → player), including a random alive player option.
 - Personal radio: each player picks songs that only they can hear, with their own volume.
 - Sound aliases, command names and permissions are configured in a JSON file, and it can be reloaded without restarting the server.
+- Messages and menus in Spanish or English (`"Language"` option), easy to extend with more languages.
 
 ## Requirements
 
@@ -88,6 +87,7 @@ Sound event types:
 
 ```json
 {
+  "Language": "es",
   "AdminFlag": "@css/generic",
   "ChatPrefix": " {green}[PlaySounds]{default}",
   "SoundEventFiles": [ "soundevents/soundevents_addon.vsndevts" ],
@@ -124,6 +124,7 @@ Sound event types:
 
 | Option | Description |
 |---|---|
+| `Language` | Language for messages and menus: `es` (Spanish) or `en` (English). New languages can be added in `Messages.cs`. |
 | `AdminFlag` | Permission required for the admin commands. |
 | `ChatPrefix` | Prefix for chat messages. Supports color tags such as `{green}`, `{red}`, `{default}`. |
 | `SoundEventFiles` | Sound event files precached on every map load. They must exist in your Workshop addon. Changes apply after a map change. |
@@ -176,3 +177,7 @@ Songs make the addon players download much bigger, so prefer `.mp3` over `.wav` 
 
 - Use `!psto @me <sound>` to test a sound without anyone else hearing it.
 - Test every sound on a local server first: if a sound event doesn't exist or the addon wasn't downloaded, nothing plays and no error is shown.
+
+## License
+
+[MIT](LICENSE)

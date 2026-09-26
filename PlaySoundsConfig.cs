@@ -5,6 +5,10 @@ namespace PlaySounds;
 
 public class PlaySoundsConfig : BasePluginConfig
 {
+    /// <summary>Idioma de los mensajes y menús: "es" o "en".</summary>
+    [JsonPropertyName("Language")]
+    public string Language { get; set; } = "es";
+
     /// <summary>Permiso necesario para usar los comandos.</summary>
     [JsonPropertyName("AdminFlag")]
     public string AdminFlag { get; set; } = "@css/generic";

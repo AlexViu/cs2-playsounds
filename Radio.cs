@@ -45,7 +45,7 @@ public partial class PlaySounds
     {
         if (caller is null)
         {
-            command.ReplyToCommand("La radio solo se puede usar desde el juego.");
+            command.ReplyToCommand(T("OnlyInGame"));
             return;
         }
         if (!HasRadioAccess(caller)) return;
@@ -58,38 +58,38 @@ public partial class PlaySounds
         if (caller is null || !HasRadioAccess(caller)) return;
 
         if (StopRadio(caller))
-            Reply(caller, null, "Radio parada.");
+            Reply(caller, null, T("Radio.Stopped"));
         else
-            Reply(caller, null, "No está sonando nada.");
+            Reply(caller, null, T("Radio.NothingPlaying"));
     }
 
     private void OpenRadioMenu(CCSPlayerController player)
     {
         var state = GetRadioState(player);
-        var menu = CreateMenu(state.Song is null ? "Radio" : $"Radio - {state.Song}");
+        var menu = CreateMenu(state.Song is null ? T("Radio.Title") : T("Radio.TitlePlaying", state.Song));
 
-        menu.AddMenuOption("Parar", (p, _) =>
+        menu.AddMenuOption(T("Radio.Stop"), (p, _) =>
         {
             StopRadio(p);
             OpenRadioMenu(p);
         }, disabled: state.Song is null);
 
-        menu.AddMenuOption($"Volumen: {state.Volume * 100:0}%", (p, _) =>
+        menu.AddMenuOption(T("Radio.Volume", Percent(state.Volume)), (p, _) =>
         {
             var s = GetRadioState(p);
             var next = RadioVolumeSteps.FirstOrDefault(v => v > s.Volume + 0.01f);
             s.Volume = next == 0 ? RadioVolumeSteps[0] : next;
 
             if (s.Song is not null)
-                Reply(p, null, $"Volumen al {s.Volume * 100:0}%. Se aplica a la siguiente canción.");
+                Reply(p, null, T("Radio.VolumeNext", Percent(s.Volume)));
             OpenRadioMenu(p);
         });
 
         var songs = Config.Radio.Songs.ToList();
         if (songs.Count == 0)
-            menu.AddMenuOption("(no hay canciones en el config)", (_, _) => { }, disabled: true);
+            menu.AddMenuOption(T("Radio.NoSongs"), (_, _) => { }, disabled: true);
         else
-            menu.AddMenuOption("Aleatoria", (p, _) =>
+            menu.AddMenuOption(T("Radio.Random"), (p, _) =>
             {
                 var (name, soundEvent) = songs[Random.Shared.Next(songs.Count)];
                 PlayRadio(p, name, soundEvent);
@@ -111,7 +111,7 @@ public partial class PlaySounds
         var pawn = player.PlayerPawn.Value;
         if (pawn is null || !pawn.IsValid)
         {
-            Reply(player, null, "{red}No se puede poner la radio ahora mismo.");
+            Reply(player, null, T("Radio.CantPlay"));
             return;
         }
 
@@ -121,7 +121,7 @@ public partial class PlaySounds
         state.Guid = pawn.EmitSound(soundEvent, new RecipientFilter { player }, state.Volume);
         state.Song = name;
 
-        Reply(player, null, $"Sonando {{green}}{name}{{default}}. Para pararla: {ChatName(Config.Radio.StopCommands)}");
+        Reply(player, null, T("Radio.NowPlaying", name, ChatName(Config.Radio.StopCommands)));
     }
 
     private bool StopRadio(CCSPlayerController player)
@@ -145,6 +145,8 @@ public partial class PlaySounds
         return true;
     }
 
+    private static string Percent(float volume) => $"{volume * 100:0}";
+
     private RadioState GetRadioState(CCSPlayerController player)
     {
         if (!_radio.TryGetValue(player.SteamID, out var state))
@@ -161,7 +163,7 @@ public partial class PlaySounds
         if (string.IsNullOrWhiteSpace(permission) || AdminManager.PlayerHasPermissions(player, permission))
             return true;
 
-        Reply(player, null, "{red}No tienes permiso para usar la radio.");
+        Reply(player, null, T("Radio.NoPermission"));
         return false;
     }
 }

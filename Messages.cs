@@ -1,0 +1,131 @@
+namespace PlaySounds;
+
+// Textos del plugin por idioma. {0}, {1}... se sustituyen por los argumentos; {green}, {red}... son colores del chat.
+// Para añadir un idioma, copia un bloque entero y traduce los textos.
+internal static class Messages
+{
+    public const string FallbackLanguage = "en";
+
+    public static readonly Dictionary<string, Dictionary<string, string>> Languages = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["es"] = new()
+        {
+            ["Desc.Menu"] = "Abre el menú de sonidos",
+            ["Desc.PlayAll"] = "Reproduce un sonido a todos los jugadores",
+            ["Desc.PlayTo"] = "Reproduce un sonido solo a los jugadores objetivo",
+            ["Desc.PlayAt"] = "Reproduce un sonido en la posición de un jugador (audible por los cercanos)",
+            ["Desc.List"] = "Lista los sonidos disponibles",
+            ["Desc.Reload"] = "Recarga PlaySounds.json sin reiniciar el servidor",
+            ["Desc.Radio"] = "Abre la radio",
+            ["Desc.RadioStop"] = "Para la canción de la radio",
+
+            ["OnlyInGame"] = "Este comando solo se puede usar desde el juego.",
+            ["NoPermission"] = "{red}No tienes permiso para usar este comando.",
+            ["Usage"] = "Uso: {0}",
+            ["Args.Sound"] = "<sonido> [volumen 0-1]",
+            ["Args.TargetSound"] = "<objetivo> <sonido> [volumen 0-1]",
+            ["InvalidSound"] = "{red}Sonido no válido. Usa {0} para ver la lista.",
+            ["NoTargets"] = "{red}No se encontró ningún jugador. Ejemplos: nombre, #userid, @all, @ct, @t, @alive.",
+            ["NoSoundsConfigured"] = "No hay sonidos en el config. Puedes usar el nombre del soundevent directamente.",
+            ["SoundList"] = "Sonidos disponibles:",
+            ["ReloadError"] = "{red}Error al recargar el config. Revisa que el JSON sea válido (mira la consola).",
+            ["Reloaded"] = "Config recargado: {0} sonido(s). Menú: {1}",
+
+            ["PlayingAll"] = "Reproduciendo {green}{0}{default} a todos ({1}).",
+            ["PlayingTo"] = "Reproduciendo {green}{0}{default} a {1}.",
+            ["PlayingAt"] = "Reproduciendo {green}{0}{default} junto a {1}.",
+            ["Notify.All"] = "{0} reprodujo {1} a todos.",
+            ["Notify.To"] = "{0} reprodujo {1} a {2}.",
+            ["Notify.At"] = "{0} reprodujo {1} junto a {2}.",
+            ["Console"] = "Consola",
+            ["PlayerCount"] = "{0} jugadores",
+
+            ["Menu.Sounds"] = "Sonidos",
+            ["Menu.NoSounds"] = "(no hay sonidos en el config)",
+            ["Menu.Who"] = "{0}: ¿a quién?",
+            ["Menu.Everyone"] = "Todos (en su cabeza)",
+            ["Menu.OnlyPlayer"] = "Solo a un jugador",
+            ["Menu.NextToPlayer"] = "Junto a un jugador (3D)",
+            ["Menu.Back"] = "« Volver",
+            ["Menu.OnlyTo"] = "{0}: solo a...",
+            ["Menu.NextTo"] = "{0}: junto a...",
+            ["Menu.RandomAlive"] = "Jugador vivo aleatorio",
+            ["Menu.Dead"] = "(muerto)",
+            ["NoAlivePlayers"] = "{red}No hay jugadores vivos.",
+            ["PlayerGone"] = "{red}Ese jugador ya no está en el servidor.",
+
+            ["Radio.Title"] = "Radio",
+            ["Radio.TitlePlaying"] = "Radio - {0}",
+            ["Radio.Stop"] = "Parar",
+            ["Radio.Volume"] = "Volumen: {0}%",
+            ["Radio.VolumeNext"] = "Volumen al {0}%. Se aplica a la siguiente canción.",
+            ["Radio.NoSongs"] = "(no hay canciones en el config)",
+            ["Radio.Random"] = "Aleatoria",
+            ["Radio.Stopped"] = "Radio parada.",
+            ["Radio.NothingPlaying"] = "No está sonando nada.",
+            ["Radio.CantPlay"] = "{red}No se puede poner la radio ahora mismo.",
+            ["Radio.NowPlaying"] = "Sonando {green}{0}{default}. Para pararla: {1}",
+            ["Radio.NoPermission"] = "{red}No tienes permiso para usar la radio.",
+        },
+
+        ["en"] = new()
+        {
+            ["Desc.Menu"] = "Opens the sound menu",
+            ["Desc.PlayAll"] = "Plays a sound to all players",
+            ["Desc.PlayTo"] = "Plays a sound only to the target players",
+            ["Desc.PlayAt"] = "Plays a sound at a player's position (heard by nearby players)",
+            ["Desc.List"] = "Lists the available sounds",
+            ["Desc.Reload"] = "Reloads PlaySounds.json without restarting the server",
+            ["Desc.Radio"] = "Opens the radio",
+            ["Desc.RadioStop"] = "Stops the radio song",
+
+            ["OnlyInGame"] = "This command can only be used in-game.",
+            ["NoPermission"] = "{red}You don't have permission to use this command.",
+            ["Usage"] = "Usage: {0}",
+            ["Args.Sound"] = "<sound> [volume 0-1]",
+            ["Args.TargetSound"] = "<target> <sound> [volume 0-1]",
+            ["InvalidSound"] = "{red}Invalid sound. Use {0} to see the list.",
+            ["NoTargets"] = "{red}No players found. Examples: name, #userid, @all, @ct, @t, @alive.",
+            ["NoSoundsConfigured"] = "No sounds in the config. You can use a sound event name directly.",
+            ["SoundList"] = "Available sounds:",
+            ["ReloadError"] = "{red}Error reloading the config. Check that the JSON is valid (see the console).",
+            ["Reloaded"] = "Config reloaded: {0} sound(s). Menu: {1}",
+
+            ["PlayingAll"] = "Playing {green}{0}{default} to everyone ({1}).",
+            ["PlayingTo"] = "Playing {green}{0}{default} to {1}.",
+            ["PlayingAt"] = "Playing {green}{0}{default} next to {1}.",
+            ["Notify.All"] = "{0} played {1} to everyone.",
+            ["Notify.To"] = "{0} played {1} to {2}.",
+            ["Notify.At"] = "{0} played {1} next to {2}.",
+            ["Console"] = "Console",
+            ["PlayerCount"] = "{0} players",
+
+            ["Menu.Sounds"] = "Sounds",
+            ["Menu.NoSounds"] = "(no sounds in the config)",
+            ["Menu.Who"] = "{0}: who?",
+            ["Menu.Everyone"] = "Everyone (in their head)",
+            ["Menu.OnlyPlayer"] = "Only one player",
+            ["Menu.NextToPlayer"] = "Next to a player (3D)",
+            ["Menu.Back"] = "« Back",
+            ["Menu.OnlyTo"] = "{0}: only to...",
+            ["Menu.NextTo"] = "{0}: next to...",
+            ["Menu.RandomAlive"] = "Random alive player",
+            ["Menu.Dead"] = "(dead)",
+            ["NoAlivePlayers"] = "{red}There are no alive players.",
+            ["PlayerGone"] = "{red}That player is no longer on the server.",
+
+            ["Radio.Title"] = "Radio",
+            ["Radio.TitlePlaying"] = "Radio - {0}",
+            ["Radio.Stop"] = "Stop",
+            ["Radio.Volume"] = "Volume: {0}%",
+            ["Radio.VolumeNext"] = "Volume set to {0}%. It applies to the next song.",
+            ["Radio.NoSongs"] = "(no songs in the config)",
+            ["Radio.Random"] = "Random",
+            ["Radio.Stopped"] = "Radio stopped.",
+            ["Radio.NothingPlaying"] = "Nothing is playing.",
+            ["Radio.CantPlay"] = "{red}The radio can't be played right now.",
+            ["Radio.NowPlaying"] = "Now playing {green}{0}{default}. To stop it: {1}",
+            ["Radio.NoPermission"] = "{red}You don't have permission to use the radio.",
+        },
+    };
+}
