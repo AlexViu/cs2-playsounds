@@ -57,7 +57,7 @@ Admin commands require the `@css/generic` permission by default (configurable). 
 2. Pick who hears it: **everyone**, **only one player**, or **next to one player (3D)**.
 3. For a player, pick them from the list (alive players first, with their team) or choose a **random alive player**.
 
-After playing a sound, the menu goes back to the sound list so you can play several in a row (disable with `"ReopenMenuAfterPlay": false`). With the chat menu you choose options by typing `!1`, `!2`...; set `"MenuType": "center"` to show the menu in the center of the screen instead.
+After playing a sound, the menu goes back to the sound list so you can play several in a row (disable with `"ReopenMenuAfterPlay": false`). With the chat menu you choose options by typing `!1`, `!2`...; set `"MenuType": "center"` to show the menu in the center of the screen instead, or `"MenuType": "wasd"` for a center menu you move through with **W/S**, select with **E** and close with **R** (the player stays still while it is open).
 
 ## Custom sounds
 
@@ -130,7 +130,7 @@ Sound event types:
 | `SoundEventFiles` | Sound event files precached on every map load. They must exist in your Workshop addon. Changes apply after a map change. |
 | `DefaultVolume` | Volume (0–1) used when a command doesn't specify one. |
 | `NotifyAdmins` | Tells other admins in chat who played what. |
-| `MenuType` | `chat` or `center`. |
+| `MenuType` | `chat`, `center` or `wasd`. |
 | `ReopenMenuAfterPlay` | Reopen the sound list after playing a sound from the menu. |
 | `Commands` | Command names (see [Renaming commands](#renaming-commands)). |
 | `Radio` | Radio settings (see [Radio](#radio)). |

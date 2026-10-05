@@ -68,13 +68,13 @@ public partial class PlaySounds
         var state = GetRadioState(player);
         var menu = CreateMenu(state.Song is null ? T("Radio.Title") : T("Radio.TitlePlaying", state.Song));
 
-        menu.AddMenuOption(T("Radio.Stop"), (p, _) =>
+        menu.AddMenuOption(T("Radio.Stop"), p =>
         {
             StopRadio(p);
             OpenRadioMenu(p);
         }, disabled: state.Song is null);
 
-        menu.AddMenuOption(T("Radio.Volume", Percent(state.Volume)), (p, _) =>
+        menu.AddMenuOption(T("Radio.Volume", Percent(state.Volume)), p =>
         {
             var s = GetRadioState(p);
             var next = RadioVolumeSteps.FirstOrDefault(v => v > s.Volume + 0.01f);
@@ -87,9 +87,9 @@ public partial class PlaySounds
 
         var songs = Config.Radio.Songs.ToList();
         if (songs.Count == 0)
-            menu.AddMenuOption(T("Radio.NoSongs"), (_, _) => { }, disabled: true);
+            menu.AddMenuOption(T("Radio.NoSongs"), _ => { }, disabled: true);
         else
-            menu.AddMenuOption(T("Radio.Random"), (p, _) =>
+            menu.AddMenuOption(T("Radio.Random"), p =>
             {
                 var (name, soundEvent) = songs[Random.Shared.Next(songs.Count)];
                 PlayRadio(p, name, soundEvent);
@@ -98,7 +98,7 @@ public partial class PlaySounds
         foreach (var (name, soundEvent) in songs)
         {
             var label = name == state.Song ? $"▶ {name}" : name;
-            menu.AddMenuOption(label, (p, _) => PlayRadio(p, name, soundEvent));
+            menu.AddMenuOption(label, p => PlayRadio(p, name, soundEvent));
         }
 
         menu.Open(player);
@@ -106,7 +106,7 @@ public partial class PlaySounds
 
     private void PlayRadio(CCSPlayerController player, string name, string soundEvent)
     {
-        MenuManager.CloseActiveMenu(player);
+        CloseMenu(player);
 
         var pawn = player.PlayerPawn.Value;
         if (pawn is null || !pawn.IsValid)

@@ -32,7 +32,7 @@ public class PlaySoundsConfig : BasePluginConfig
     [JsonPropertyName("NotifyAdmins")]
     public bool NotifyAdmins { get; set; } = true;
 
-    /// <summary>Tipo de menú: "chat" (se elige con !1, !2...) o "center" (HTML en el centro de la pantalla).</summary>
+    /// <summary>Tipo de menú: "chat" (se elige con !1, !2...), "center" (HTML en el centro de la pantalla) o "wasd" (centro de la pantalla, W/S para moverse, E para elegir, R para salir).</summary>
     [JsonPropertyName("MenuType")]
     public string MenuType { get; set; } = "chat";
 

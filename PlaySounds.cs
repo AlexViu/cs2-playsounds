@@ -69,9 +69,27 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
                 manifest.AddResource(file);
         });
 
+        RegisterListener<Listeners.OnClientDisconnectPost>(_wasdMenu.Remove);
+
+        // En hot reload OnAllPluginsLoaded no se dispara
+        if (hotReload)
+            RegisterListener<Listeners.OnTick>(_wasdMenu.OnTick);
+
         LoadRadio();
         RegisterCommands();
     }
+
+    public override void OnAllPluginsLoaded(bool hotReload)
+    {
+        // El menú WASD se registra después de cargar todos los plugins para que su OnTick corra el último
+        // y su PrintToCenterHtml no quede tapado por otros HUD del centro (p. ej. SharpTimer)
+        if (!hotReload)
+            RegisterListener<Listeners.OnTick>(_wasdMenu.OnTick);
+    }
+
+    public override void Unload(bool hotReload) => _wasdMenu.CloseAll();
+
+    private readonly WasdMenuManager _wasdMenu = new();
 
     #region Comandos
 
@@ -212,10 +230,10 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         var menu = CreateMenu(T("Menu.Sounds"));
 
         if (Config.Sounds.Count == 0)
-            menu.AddMenuOption(T("Menu.NoSounds"), (_, _) => { }, disabled: true);
+            menu.AddMenuOption(T("Menu.NoSounds"), _ => { }, disabled: true);
 
         foreach (var (alias, soundEvent) in Config.Sounds)
-            menu.AddMenuOption(alias, (p, _) => OpenModeMenu(p, alias, soundEvent));
+            menu.AddMenuOption(alias, p => OpenModeMenu(p, alias, soundEvent));
 
         menu.Open(admin);
     }
@@ -225,14 +243,14 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     {
         var menu = CreateMenu(T("Menu.Who", alias));
 
-        menu.AddMenuOption(T("Menu.Everyone"), (p, _) =>
+        menu.AddMenuOption(T("Menu.Everyone"), p =>
         {
             PlayToAll(p, sound, Config.DefaultVolume);
             AfterPlay(p);
         });
-        menu.AddMenuOption(T("Menu.OnlyPlayer"), (p, _) => OpenPlayerMenu(p, alias, sound, PlayMode.Private));
-        menu.AddMenuOption(T("Menu.NextToPlayer"), (p, _) => OpenPlayerMenu(p, alias, sound, PlayMode.AtPosition));
-        menu.AddMenuOption(T("Menu.Back"), (p, _) => OpenSoundMenu(p));
+        menu.AddMenuOption(T("Menu.OnlyPlayer"), p => OpenPlayerMenu(p, alias, sound, PlayMode.Private));
+        menu.AddMenuOption(T("Menu.NextToPlayer"), p => OpenPlayerMenu(p, alias, sound, PlayMode.AtPosition));
+        menu.AddMenuOption(T("Menu.Back"), p => OpenSoundMenu(p));
 
         menu.Open(admin);
     }
@@ -243,7 +261,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         var title = mode == PlayMode.Private ? T("Menu.OnlyTo", alias) : T("Menu.NextTo", alias);
         var menu = CreateMenu(title);
 
-        menu.AddMenuOption(T("Menu.RandomAlive"), (p, _) =>
+        menu.AddMenuOption(T("Menu.RandomAlive"), p =>
         {
             var alive = Utilities.GetPlayers().Where(pl => IsValidHuman(pl) && pl.PawnIsAlive).ToList();
             if (alive.Count == 0)
@@ -268,7 +286,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
             var label = $"{target.PlayerName} [{TeamTag(target.Team)}]{(target.PawnIsAlive ? "" : " " + T("Menu.Dead"))}";
             var needsPawn = mode == PlayMode.AtPosition && !target.PawnIsAlive;
 
-            menu.AddMenuOption(label, (p, _) =>
+            menu.AddMenuOption(label, p =>
             {
                 var current = Utilities.GetPlayerFromUserid(userId);
                 if (current is null || !IsValidHuman(current))
@@ -283,13 +301,34 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
             }, disabled: needsPawn);
         }
 
-        menu.AddMenuOption(T("Menu.Back"), (p, _) => OpenModeMenu(p, alias, sound));
+        menu.AddMenuOption(T("Menu.Back"), p => OpenModeMenu(p, alias, sound));
 
         menu.Open(admin);
     }
 
-    private IMenu CreateMenu(string title)
+    private SoundMenu CreateMenu(string title) => new(this, title);
+
+    // Opciones recogidas antes de saber qué tipo de menú se va a mostrar (Config.MenuType)
+    private sealed class SoundMenu(PlaySounds plugin, string title)
     {
+        private readonly List<WasdMenuOption> _options = [];
+
+        public void AddMenuOption(string text, Action<CCSPlayerController> onSelect, bool disabled = false) =>
+            _options.Add(new WasdMenuOption { Display = text, OnChoose = onSelect, Disabled = disabled });
+
+        public void Open(CCSPlayerController player) => plugin.OpenMenu(title, _options, player);
+    }
+
+    private void OpenMenu(string title, List<WasdMenuOption> options, CCSPlayerController player)
+    {
+        if (Config.MenuType.Equals("wasd", StringComparison.OrdinalIgnoreCase))
+        {
+            var wasd = new WasdMenu(title);
+            wasd.Options.AddRange(options);
+            _wasdMenu.Open(player, wasd);
+            return;
+        }
+
         IMenu menu = Config.MenuType.Equals("center", StringComparison.OrdinalIgnoreCase)
             ? new CenterHtmlMenu(title, this)
             : new ChatMenu(title);
@@ -297,7 +336,15 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         // Nosotros abrimos el siguiente menú en el callback; si la librería cerrara después, lo cerraría.
         menu.PostSelectAction = PostSelectAction.Nothing;
         menu.ExitButton = true;
-        return menu;
+        foreach (var option in options)
+            menu.AddMenuOption(option.Display, (p, _) => option.OnChoose(p), option.Disabled);
+        menu.Open(player);
+    }
+
+    private void CloseMenu(CCSPlayerController player)
+    {
+        _wasdMenu.Close(player);
+        MenuManager.CloseActiveMenu(player);
     }
 
     private void AfterPlay(CCSPlayerController admin)
@@ -305,7 +352,7 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
         if (Config.ReopenMenuAfterPlay)
             OpenSoundMenu(admin);
         else
-            MenuManager.CloseActiveMenu(admin);
+            CloseMenu(admin);
     }
 
     private static string TeamTag(CsTeam team) => team switch
@@ -433,7 +480,9 @@ public partial class PlaySounds : BasePlugin, IPluginConfig<PlaySoundsConfig>
     private static readonly Dictionary<string, string> ColorTags = typeof(ChatColors)
         .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
         .Where(f => f.FieldType == typeof(char))
-        .ToDictionary(f => $"{{{f.Name.ToLowerInvariant()}}}", f => f.GetValue(null)!.ToString()!);
+        // ChatColors tiene alias que solo cambian en mayúsculas (DarkRed/Darkred): sin esto, clave duplicada
+        .GroupBy(f => $"{{{f.Name.ToLowerInvariant()}}}")
+        .ToDictionary(g => g.Key, g => g.First().GetValue(null)!.ToString()!);
 
     private static string ReplaceColors(string message)
     {
